@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html  lang="zh">
+<head>
+    <meta charset="utf-8" />
+
+<meta name="generator" content="Hexo 3.9.0" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+
+<title>标签: 安全 - 开发笔记</title>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-light.css">
+
+
+    
+    
+<style>body>.footer,body>.navbar,body>.section{opacity:0}</style>
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css">
+
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.css">
+
+    
+    
+    
+    
+<link rel="stylesheet" href="/css/back-to-top.css">
+
+    
+    
+    
+    
+    
+    
+    
+    <link rel="stylesheet" href="/css/progressbar.css">
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+    
+    
+    
+
+
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="is-2-column">
+    <nav class="navbar navbar-main">
+    <div class="container">
+        <div class="navbar-brand is-flex-center">
+            <a class="navbar-item navbar-title" href="/">
+                <span class="main">开发笔记</span>
+                |
+                <span class="sub">一些不起眼的知识</span>
+            </a>
+        </div>
+        <div class="navbar-menu">
+            
+            <div class="navbar-start">
+                
+                <a class="navbar-item"
+                href="/">主页</a>
+                
+                <a class="navbar-item"
+                href="/categories">分类</a>
+                
+                <a class="navbar-item"
+                href="/archives">归档</a>
+                
+                <a class="navbar-item"
+                href="/about">关于</a>
+                
+            </div>
+            
+            <div class="navbar-end">
+                
+                
+                
+                <a class="navbar-item search" title="搜索" href="javascript:;">
+                    <i class="fas fa-search"></i>
+                </a>
+                
+            </div>
+        </div>
+    </div>
+</nav>
+    
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-8-tablet is-8-desktop is-9-widescreen has-order-2 column-main"><div class="card">
+    <div class="card-content">
+        <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li><a href="/tags">标签</a></li>
+            <li class="is-active"><a href="#" aria-current="page">安全</a></li>
+        </ul>
+        </nav>
+    </div>
+</div>
+
+    
+<div class="card">
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2019-10-11T03:05:33.000Z">2019-10-11</time>
+                
+                <div class="level-item">
+                <a class="has-link-grey -link" href="/categories/杂记/">杂记</a>
+                </div>
+                
+                
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                <a class="has-link-black-ter" href="/一次性密码方案/">一次性密码方案</a>
+            
+        </h1>
+        <div class="content">
+            <ol>
+<li><h5 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h5><p> <strong>OTP一次性密码</strong>常见于后台登陆，敏感操作的二次验证中，常用方案有HOTP（基于HMAC的一次性密码）、TOTP（基于时间的一次性密码）、短信验证、PUSH验证等，本文只讨论实现成本低的HOTP、TOTP</p>
+</li>
+</ol>
+<ol start="2">
+<li><h5 id="HOTP-HMAC-based-One-time-Password-algorithm"><a href="#HOTP-HMAC-based-One-time-Password-algorithm" class="headerlink" title="HOTP: HMAC-based One-time Password algorithm"></a>HOTP: HMAC-based One-time Password algorithm</h5><blockquote>
+<p>基于散列消息验证码的一次性密码算法</p>
+</blockquote>
+<p> HOTP使用对称验证方式：即验证双方使用相同的Hash算法 H、密钥K、运算值长度，以及“相同”的随机值C，验证双方分别计算得出相同的则验证成功，关于“相同”的随机值C含义后文会介绍。HOTP对于Hash1算法没有特别要求但建议采用SHA-256，密码长度6-10位，建议使用6位或8位，目前市面上常见的二次验证大多采用6位。</p>
+<ul>
+<li><h6 id="名词解释"><a href="#名词解释" class="headerlink" title="名词解释"></a>名词解释</h6><ul>
+<li>HMAC:哈希算法</li>
+<li>K:密钥</li>
+<li>C:随机值（此值验证双方要一致）</li>
+</ul>
+</li>
+<li><h6 id="实现方式-SHA-1为例子"><a href="#实现方式-SHA-1为例子" class="headerlink" title="实现方式 SHA-1为例子"></a>实现方式 SHA-1为例子</h6><ol>
+<li><p>HMAC(K, C)</p>
+<blockquote>
+<p>Hash结果为20字节字符串MAC</p>
+</blockquote>
+</li>
+<li><p>truncate(MAC) = extract31(MAC, MAC[(19×8) + 4:(19×8)+7] ×  8)</p>
+<blockquote>
+<p>最后1个字节的高地址4位表示成整数i，作为下一步截取偏移量。</p>
+</blockquote>
+</li>
+<li><p>extract31(MAC, i) = MAC[i+1 : i+(4 × 8)−1]</p>
+<blockquote>
+<p>从原始Hash值中从 i+1到i+(4 × 8)−1 位截取4个bit，结果转成整数，不足6位前面补0。</p>
+</blockquote>
+</li>
+</ol>
+</li>
+<li><h6 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h6><p>如果上面计算过程我解释清楚了，那么你应该会有个疑问，K为密钥那么验证双方有记录就可以，C怎么保持一致，正如前文提到C需要相同，一般实现上C采用计数器方式，每次验证后验证双方同时加1，为了容忍一方计数器落后可采用验证方在C±n，即在一个可控范围内验证通过，即便如此工程上实现依旧有难度或者实现不优雅，所以才会有TOTP：基于时间的一次性密码出现。</p>
+</li>
+</ul>
+</li>
+<li><h5 id="TOTP-Time-based-One-time-Password-algorithm"><a href="#TOTP-Time-based-One-time-Password-algorithm" class="headerlink" title="TOTP: Time-based One-time Password algorithm"></a>TOTP: Time-based One-time Password algorithm</h5><p> TOTP一次性密码需要验证端与被验证端时间同步，验证方式与HOTP类似，上面计算过程中的C改为时间戳，下面我们以Google验证器的实现解析TOTP的原理。</p>
+<ul>
+<li><h6 id="Google-Authenticator-计算过程"><a href="#Google-Authenticator-计算过程" class="headerlink" title="Google Authenticator 计算过程"></a>Google Authenticator 计算过程</h6><figure class="highlight plain hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function GoogleAuthenticatorCode(string secret)</span><br><span class="line">    message := floor(current Unix time / 30)</span><br><span class="line">    hash := HMAC-SHA1(secret, message)</span><br><span class="line">    offset := last nibble of hash</span><br><span class="line">    truncatedHash := hash[offset..offset+3]  //4 bytes starting at the offset</span><br><span class="line">    Set the first bit of truncatedHash to zero  //remove the most significant bit</span><br><span class="line">    code := truncatedHash mod 1000000</span><br><span class="line">    pad code with 0 from the left until length of code is 6</span><br><span class="line">    return code</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>可以看出计算方式与HOTP一致 </p>
+</blockquote>
+<p>我们把floor(current Unix time / 30)记做T，验证端分别使用C = T-1、T、T+1 计算三次，就可以在两端30秒的误差内实现验证一致，从而避免了两端时间不一致造成的验证失败，也使一次性密码的有效期保证最低1分钟有效，实现上只要保证验证双方采用相同的密钥，时间差不超过30秒就能做到一次性密码校验。</p>
+</li>
+</ul>
+</li>
+</ol>
+<ol start="4">
+<li><h4 id="开源实现推荐"><a href="#开源实现推荐" class="headerlink" title="开源实现推荐"></a>开源实现推荐</h4><ul>
+<li><h6 id="PHP-https-github-com-PHPGangsta-GoogleAuthenticator-git"><a href="#PHP-https-github-com-PHPGangsta-GoogleAuthenticator-git" class="headerlink" title="PHP https://github.com/PHPGangsta/GoogleAuthenticator.git"></a>PHP <a href="https://github.com/PHPGangsta/GoogleAuthenticator.git" target="_blank" rel="noopener">https://github.com/PHPGangsta/GoogleAuthenticator.git</a></h6></li>
+<li><h6 id="Golang-https-github-com-pquerna-otp-totp"><a href="#Golang-https-github-com-pquerna-otp-totp" class="headerlink" title="Golang https://github.com/pquerna/otp/totp"></a>Golang <a href="github.com/pquerna/otp/totp">https://github.com/pquerna/otp/totp</a></h6></li>
+<li><h6 id="Rust-https-github-com-hanskorg-google-authenticator-rust-git"><a href="#Rust-https-github-com-hanskorg-google-authenticator-rust-git" class="headerlink" title="Rust https://github.com/hanskorg/google-authenticator-rust.git"></a>Rust <a href="https://github.com/hanskorg/google-authenticator-rust.git" target="_blank" rel="noopener">https://github.com/hanskorg/google-authenticator-rust.git</a></h6></li>
+</ul>
+</li>
+</ol>
+
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+
+
+
+
+
+
+</div>
+                
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen  has-order-3 column-right ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <nav class="level">
+            <div class="level-item has-text-centered" style="flex-shrink: 1">
+                <div>
+                    
+                    <figure class="image is-128x128 has-mb-6">
+                        <img class="" src="/images/avatar.png" alt="Hans">
+                    </figure>
+                    
+                    <p class="is-size-4 is-block">
+                        Hans
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-block">
+                        开发笔记
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-flex is-flex-center has-text-grey">
+                        <i class="fas fa-map-marker-alt has-mr-7"></i>
+                        <span>火星？</span>
+                    </p>
+                    
+                </div>
+            </div>
+        </nav>
+        <nav class="level is-mobile">
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        文章
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        5
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        分类
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        3
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        标签
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        4
+                    </p>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="level">
+            <a class="level-item button is-link is-rounded" href="https://github.com/hanskorg" target="_blank">
+                关注我</a>
+        </div>
+        
+        
+        
+        <div class="level is-mobile">
+            
+            <a class="level-item button is-white is-marginless" target="_blank"
+                title="Github" href="https://github.com/hanskorg">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+            
+        </div>
+        
+    </div>
+</div>
+    
+        
+    
+        <div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2020-03-14T13:24:27.000Z">2020-03-14</time></div>
+                    <a href="/https-handsharke/" class="title has-link-black-ter is-size-6 has-text-weight-normal">HTTPS握手</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/协议/">协议</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2020-03-13T16:00:00.000Z">2020-03-14</time></div>
+                    <a href="/http-history/" class="title has-link-black-ter is-size-6 has-text-weight-normal">http历史版本特性</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/协议/">协议</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-10-17T06:07:54.000Z">2019-10-17</time></div>
+                    <a href="/uuid-server/" class="title has-link-black-ter is-size-6 has-text-weight-normal">UUID 生成服务器搭建</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/工具/">工具</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-10-11T03:05:33.000Z">2019-10-11</time></div>
+                    <a href="/一次性密码方案/" class="title has-link-black-ter is-size-6 has-text-weight-normal">一次性密码方案</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/杂记/">杂记</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-05-14T16:00:00.000Z">2018-05-15</time></div>
+                    <a href="/oss-transfer/" class="title has-link-black-ter is-size-6 has-text-weight-normal">跨服务对象存储迁移工具介绍</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/工具/">工具</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                分类
+            </h3>
+            <ul class="menu-list">
+            <li>
+        <a class="level is-marginless" href="/categories/协议/">
+            <span class="level-start">
+                <span class="level-item">协议</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">2</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/工具/">
+            <span class="level-start">
+                <span class="level-item">工具</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">2</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/杂记/">
+            <span class="level-start">
+                <span class="level-item">杂记</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2020/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2020</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/10/">
+                <span class="level-start">
+                    <span class="level-item">十月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/05/">
+                <span class="level-start">
+                    <span class="level-item">五月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+    
+        <div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            标签云
+        </h3>
+        <a href="/tags/http-https-handsharke-握手/" style="font-size: 10px;">http https handsharke 握手</a> <a href="/tags/http-协议/" style="font-size: 10px;">http 协议</a> <a href="/tags/安全/" style="font-size: 10px;">安全</a> <a href="/tags/密码/" style="font-size: 10px;">密码</a>
+    </div>
+</div>
+    
+    
+</div>
+
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+    <div class="container">
+        <div class="level">
+            <div class="level-start has-text-centered-mobile">
+                <p class="is-size-7">
+                &copy; 2020 Hans&nbsp;
+                Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank">Icarus</a>
+                
+                </p>
+            </div>
+            <div class="level-end">
+            
+            </div>
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script>
+<script>moment.locale("zh-CN");</script>
+
+<script>
+var IcarusThemeSettings = {
+    article: {
+        highlight: {
+            clipboard: true,
+            fold: 'unfolded'
+        }
+    }
+};
+</script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script>
+
+
+
+    
+    
+<script src="/js/animation.js"></script>
+
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script>
+<script src="/js/gallery.js" defer></script>
+
+    
+    
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/">Update
+            my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        });
+    });
+</script>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-MML-AM_CHTML" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    MathJax.Hub.Config({
+        'HTML-CSS': {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [
+                ['$','$'],
+                ['\\(','\\)']
+            ]
+        }
+    });
+});
+</script>
+    
+    
+<a id="back-to-top" title="回到顶端" href="javascript:;">
+    <i class="fas fa-chevron-up"></i>
+</a>
+<script src="/js/back-to-top.js" defer></script>
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+<script src="/js/main.js" defer></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="想要查找什么..." />
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: '文章',
+                PAGES: '页面',
+                CATEGORIES: '分类',
+                TAGS: '标签',
+                UNTITLED: '(无标题)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js" defer></script>
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/insight.css">
+    
+</body>
+</html>
